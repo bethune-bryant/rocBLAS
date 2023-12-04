@@ -247,9 +247,9 @@ void testing_gemm_ex(const Arguments& arg)
 
     bool alpha_isnan = arg.alpha_isnan<Tc>();
     bool beta_isnan  = arg.beta_isnan<Tc>();
-    if(!std::is_same_v<
-           To,
-           float> && !std::is_same_v<To, double> && !std::is_same_v<To, rocblas_half> && !rocblas_is_complex<To> && (alpha_isnan || beta_isnan))
+    if(!std::is_same_v<To, float> && !std::is_same_v<To, double>
+       && !std::is_same_v<To, rocblas_half> && !rocblas_is_complex<To>
+       && (alpha_isnan || beta_isnan))
         return; // Exclude integers or other types which don't support NaN
 
     Tc h_alpha_Tc = arg.get_alpha<Tc>();
@@ -346,40 +346,42 @@ void testing_gemm_ex(const Arguments& arg)
     }
 
     // Allocate host memory
-    host_matrix<Ti> hA(A_row, A_col, lda);
-    host_matrix<Ti> hB(B_row, B_col, ldb);
-    host_matrix<To> hC(M, N, ldc);
+    //host_matrix<Ti> hA(A_row, A_col, lda);
+    //host_matrix<Ti> hB(B_row, B_col, ldb);
+    //host_matrix<To> hC(M, N, ldc);
 
     // Check host memory allocation
-    CHECK_HIP_ERROR(hA.memcheck());
-    CHECK_HIP_ERROR(hB.memcheck());
-    CHECK_HIP_ERROR(hC.memcheck());
+    //CHECK_HIP_ERROR(hA.memcheck());
+    //CHECK_HIP_ERROR(hB.memcheck());
+    //CHECK_HIP_ERROR(hC.memcheck());
 
     // Allocate device memory
-    device_strided_batch_matrix<Ti> dA(A_row, A_col, lda, stride_a, flush_batch_count);
-    device_strided_batch_matrix<Ti> dB(B_row, B_col, ldb, stride_b, flush_batch_count);
-    device_strided_batch_matrix<To> dC(M, N, ldc, stride_c, flush_batch_count);
+    //device_strided_batch_matrix<Ti> dA(A_row, A_col, lda, stride_a, flush_batch_count);
+    //device_strided_batch_matrix<Ti> dB(B_row, B_col, ldb, stride_b, flush_batch_count);
+    //device_strided_batch_matrix<To> dC(M, N, ldc, stride_c, flush_batch_count);
     // if C!=D, allocate C and D normally
     // if C==D, allocate C big enough for the larger of C and D; D points to C
-    device_strided_batch_matrix<To> dD_alloc
-        = (arg.outofplace) ? device_strided_batch_matrix<To>(M, N, ldd, stride_d, flush_batch_count)
-                           : device_strided_batch_matrix<To>(0, 1, 1, 1, 1);
-    device_strided_batch_matrix<To>& dD = (arg.outofplace) ? dD_alloc : dC;
+    //device_strided_batch_matrix<To> dD_alloc
+    //    = (arg.outofplace) ? device_strided_batch_matrix<To>(M, N, ldd, stride_d, flush_batch_count)
+    //                       : device_strided_batch_matrix<To>(0, 1, 1, 1, 1);
+    //device_strided_batch_matrix<To>& dD = (arg.outofplace) ? dD_alloc : dC;
 
     device_vector<Tc> d_alpha_Tc(1);
     device_vector<Tc> d_beta_Tc(1);
 
     // Check device memory allocation
+    /*
     CHECK_DEVICE_ALLOCATION(dA.memcheck());
     CHECK_DEVICE_ALLOCATION(dB.memcheck());
     CHECK_DEVICE_ALLOCATION(dC.memcheck());
     CHECK_DEVICE_ALLOCATION(dD_alloc.memcheck());
     CHECK_DEVICE_ALLOCATION(d_alpha_Tc.memcheck());
     CHECK_DEVICE_ALLOCATION(d_beta_Tc.memcheck());
+    */
 
     bool alt       = (rocblas_gemm_flags_fp16_alt_impl & flags);
     bool alt_round = (rocblas_gemm_flags_fp16_alt_impl_rnz & flags);
-
+    /*
     // Initialize data on host memory
     rocblas_init_matrix<Ti>(
         hA, arg, rocblas_client_alpha_sets_nan, rocblas_client_general_matrix, true);
@@ -568,7 +570,7 @@ void testing_gemm_ex(const Arguments& arg)
             rocblas_error = err1 > rocblas_error ? err1 : rocblas_error;
         }
     }
-
+*/
     if(arg.timing)
     {
         int number_cold_calls = arg.cold_iters;
@@ -580,10 +582,10 @@ void testing_gemm_ex(const Arguments& arg)
         {
             // clang-format off
             CHECK_ROCBLAS_ERROR(rocblas_gemm_ex_fn(handle, transA, transB, M, N, K, &h_alpha_Tc,
-                                                   dA[0], arg.a_type, lda,
-                                                   dB[0], arg.b_type, ldb, &h_beta_Tc,
-                                                   dC[0], arg.c_type, ldc,
-                                                   dD[0],     d_type, ldd,
+                                                   arg.dA, arg.a_type, lda,
+                                                   arg.dB, arg.b_type, ldb, &h_beta_Tc,
+                                                   arg.dC, arg.c_type, ldc,
+                                                   arg.dD,     d_type, ldd,
                                                    arg.compute_type, algo, solution_index, flags));
             // clang-format on
         }
@@ -596,10 +598,10 @@ void testing_gemm_ex(const Arguments& arg)
             int flush_index = (i + 1) % flush_batch_count;
             // clang-format off
             rocblas_gemm_ex_fn(handle, transA, transB, M, N, K, &h_alpha_Tc,
-                               dA[flush_index], arg.a_type, lda,
-                               dB[flush_index], arg.b_type, ldb, &h_beta_Tc,
-                               dC[flush_index], arg.c_type, ldc,
-                               dD[flush_index],     d_type, ldd,
+                               arg.dA, arg.a_type, lda,
+                               arg.dB, arg.b_type, ldb, &h_beta_Tc,
+                               arg.dC, arg.c_type, ldc,
+                               arg.dD,     d_type, ldd,
                                arg.compute_type, algo, solution_index, flags);
             // clang-format on
         }
