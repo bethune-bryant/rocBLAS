@@ -1347,7 +1347,8 @@ int rocblas_bench_datafile(const std::string& filter,
         if(arg.K > maxK)
             maxK = arg.K;
         if(arg.a_type != rocblas_datatype_f16_r || arg.b_type != rocblas_datatype_f16_r
-           || arg.c_type != rocblas_datatype_f16_r || arg.d_type != rocblas_datatype_f16_r)
+           || arg.c_type != rocblas_datatype_f16_r || arg.d_type != rocblas_datatype_f16_r
+           || !strcmp(arg.function, "rocblas_gemm_ex"))
         {
             do_shared_memory = false;
             break;
