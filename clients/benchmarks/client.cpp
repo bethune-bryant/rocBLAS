@@ -1341,6 +1341,28 @@ int rocblas_bench_datafile(const std::string& filter,
     void*                       dBPointer = dB.device_vector_setup();
     void*                       dCPointer = dC.device_vector_setup();
     void*                       dDPointer = dD.device_vector_setup();
+
+    // Allocate host memory
+    host_vector<rocblas_half> hA(267911424);
+    host_vector<rocblas_half> hB(267911424);
+    host_vector<rocblas_half> hC(267911424);
+
+    // Check host memory allocation
+    CHECK_HIP_ERROR(hA.memcheck());
+    CHECK_HIP_ERROR(hB.memcheck());
+    CHECK_HIP_ERROR(hC.memcheck());
+
+    // Initialize host memory
+    // rocblas_check_matrix_type, uplo, host_vector, M, N, lda
+    rocblas_init_matrix_trig<rocblas_half>(rocblas_client_general_matrix, '*', hA, 16368, 16368, 1);
+    rocblas_init_matrix_trig<rocblas_half>(rocblas_client_general_matrix, '*', hB, 16368, 16368, 1);
+    rocblas_init_matrix_trig<rocblas_half>(rocblas_client_general_matrix, '*', hC, 16368, 16368, 1);
+
+    // copy data from CPU to device
+    CHECK_HIP_ERROR(dA.transfer_from(hA));
+    CHECK_HIP_ERROR(dB.transfer_from(hB));
+    CHECK_HIP_ERROR(dC.transfer_from(hC));
+  
     for(Arguments arg : RocBLAS_TestData())
     {
         arg.dA = dAPointer;
