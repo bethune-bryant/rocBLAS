@@ -254,12 +254,14 @@ struct perf_gemm_ex : rocblas_test_invalid
 };
 
 template <typename Ti, typename To, typename Tc>
-struct perf_gemm_ex<Ti,
-                    To,
-                    Tc,
-                    std::enable_if_t<!std::is_same_v<Ti, void>
-                                     && !(std::is_same_v<Ti, To> && std::is_same_v<Ti, Tc>
-                                          && std::is_same_v<Ti, rocblas_bfloat16>)>>
+struct perf_gemm_ex<
+    Ti,
+    To,
+    Tc,
+    std::enable_if_t<
+        !std::is_same_v<
+            Ti,
+            void> && !(std::is_same_v<Ti, To> && std::is_same_v<Ti, Tc> && std::is_same_v<Ti, rocblas_bfloat16>)>>
     : rocblas_test_valid
 {
     void operator()(const Arguments& arg)
@@ -314,9 +316,11 @@ struct perf_gemm_strided_batched_ex<
     Ti,
     To,
     Tc,
-    std::enable_if_t<!std::is_same_v<Ti, void>
-                     && !(std::is_same_v<Ti, To> && std::is_same_v<Ti, Tc>
-                          && std::is_same_v<Ti, rocblas_bfloat16>)>> : rocblas_test_valid
+    std::enable_if_t<
+        !std::is_same_v<
+            Ti,
+            void> && !(std::is_same_v<Ti, To> && std::is_same_v<Ti, Tc> && std::is_same_v<Ti, rocblas_bfloat16>)>>
+    : rocblas_test_valid
 {
     void operator()(const Arguments& arg)
     {
@@ -568,10 +572,12 @@ struct perf_gemv_batched_and_strided_batched<
 };
 
 template <typename T, typename U>
-struct perf_blas<T,
-                 U,
-                 std::enable_if_t<std::is_same_v<T, rocblas_double_complex>
-                                  || std::is_same_v<T, rocblas_float_complex>>> : rocblas_test_valid
+struct perf_blas<
+    T,
+    U,
+    std::enable_if_t<
+        std::is_same_v<T, rocblas_double_complex> || std::is_same_v<T, rocblas_float_complex>>>
+    : rocblas_test_valid
 {
     void operator()(const Arguments& arg)
     {
@@ -737,26 +743,37 @@ struct perf_blas_axpy_ex<
     Tx,
     Ty,
     Tex,
-    std::enable_if_t<(std::is_same_v<Ta, float> && std::is_same_v<Ta, Tx> && std::is_same_v<Tx, Ty>
-                      && std::is_same_v<Ty, Tex>)
-                     || (std::is_same_v<Ta, double> && std::is_same_v<Ta, Tx>
-                         && std::is_same_v<Tx, Ty> && std::is_same_v<Ty, Tex>)
-                     || (std::is_same_v<Ta, rocblas_half> && std::is_same_v<Ta, Tx>
-                         && std::is_same_v<Tx, Ty> && std::is_same_v<Ty, Tex>)
-                     || (std::is_same_v<Ta, rocblas_float_complex> && std::is_same_v<Ta, Tx>
-                         && std::is_same_v<Tx, Ty> && std::is_same_v<Ty, Tex>)
-                     || (std::is_same_v<Ta, rocblas_double_complex> && std::is_same_v<Ta, Tx>
-                         && std::is_same_v<Tx, Ty> && std::is_same_v<Ty, Tex>)
-                     || (std::is_same_v<Ta, rocblas_half> && std::is_same_v<Ta, Tx>
-                         && std::is_same_v<Tx, Ty> && std::is_same_v<Tex, float>)
-                     || (std::is_same_v<Ta, rocblas_half> && std::is_same_v<Ta, Tx>
-                         && std::is_same_v<Ty, Tex> && std::is_same_v<Tex, float>)
-                     || (std::is_same_v<Ta, float> && std::is_same_v<Tx, rocblas_half>
-                         && std::is_same_v<Ta, Tex> && std::is_same_v<Tx, Ty>)
-                     || (std::is_same_v<Ta, rocblas_bfloat16> && std::is_same_v<Ta, Tx>
-                         && std::is_same_v<Tx, Ty> && std::is_same_v<Tex, float>)
-                     || (std::is_same_v<Ta, float> && std::is_same_v<Tx, rocblas_bfloat16>
-                         && std::is_same_v<Tx, Ty> && std::is_same_v<Ta, Tex>)>>
+    std::enable_if_t<
+        (std::is_same_v<
+             Ta,
+             float> && std::is_same_v<Ta, Tx> && std::is_same_v<Tx, Ty> && std::is_same_v<Ty, Tex>)
+        || (std::is_same_v<
+                Ta,
+                double> && std::is_same_v<Ta, Tx> && std::is_same_v<Tx, Ty> && std::is_same_v<Ty, Tex>)
+        || (std::is_same_v<
+                Ta,
+                rocblas_half> && std::is_same_v<Ta, Tx> && std::is_same_v<Tx, Ty> && std::is_same_v<Ty, Tex>)
+        || (std::is_same_v<
+                Ta,
+                rocblas_float_complex> && std::is_same_v<Ta, Tx> && std::is_same_v<Tx, Ty> && std::is_same_v<Ty, Tex>)
+        || (std::is_same_v<
+                Ta,
+                rocblas_double_complex> && std::is_same_v<Ta, Tx> && std::is_same_v<Tx, Ty> && std::is_same_v<Ty, Tex>)
+        || (std::is_same_v<
+                Ta,
+                rocblas_half> && std::is_same_v<Ta, Tx> && std::is_same_v<Tx, Ty> && std::is_same_v<Tex, float>)
+        || (std::is_same_v<
+                Ta,
+                rocblas_half> && std::is_same_v<Ta, Tx> && std::is_same_v<Ty, Tex> && std::is_same_v<Tex, float>)
+        || (std::is_same_v<
+                Ta,
+                float> && std::is_same_v<Tx, rocblas_half> && std::is_same_v<Ta, Tex> && std::is_same_v<Tx, Ty>)
+        || (std::is_same_v<
+                Ta,
+                rocblas_bfloat16> && std::is_same_v<Ta, Tx> && std::is_same_v<Tx, Ty> && std::is_same_v<Tex, float>)
+        || (std::is_same_v<
+                Ta,
+                float> && std::is_same_v<Tx, rocblas_bfloat16> && std::is_same_v<Tx, Ty> && std::is_same_v<Ta, Tex>)>>
     : rocblas_test_valid
 {
     void operator()(const Arguments& arg)
@@ -781,20 +798,28 @@ struct perf_blas_dot_ex<
     Ty,
     Tr,
     Tex,
-    std::enable_if_t<(std::is_same_v<Tx, float> && std::is_same_v<Tx, Ty> && std::is_same_v<Ty, Tr>
-                      && std::is_same_v<Tr, Tex>)
-                     || (std::is_same_v<Tx, double> && std::is_same_v<Tx, Ty>
-                         && std::is_same_v<Ty, Tr> && std::is_same_v<Tr, Tex>)
-                     || (std::is_same_v<Tx, rocblas_half> && std::is_same_v<Tx, Ty>
-                         && std::is_same_v<Ty, Tr> && std::is_same_v<Tr, Tex>)
-                     || (std::is_same_v<Tx, rocblas_float_complex> && std::is_same_v<Tx, Ty>
-                         && std::is_same_v<Ty, Tr> && std::is_same_v<Tr, Tex>)
-                     || (std::is_same_v<Tx, rocblas_double_complex> && std::is_same_v<Tx, Ty>
-                         && std::is_same_v<Ty, Tr> && std::is_same_v<Tr, Tex>)
-                     || (std::is_same_v<Tx, rocblas_half> && std::is_same_v<Tx, Ty>
-                         && std::is_same_v<Ty, Tr> && std::is_same_v<Tex, float>)
-                     || (std::is_same_v<Tx, rocblas_bfloat16> && std::is_same_v<Tx, Ty>
-                         && std::is_same_v<Ty, Tr> && std::is_same_v<Tex, float>)>>
+    std::enable_if_t<
+        (std::is_same_v<
+             Tx,
+             float> && std::is_same_v<Tx, Ty> && std::is_same_v<Ty, Tr> && std::is_same_v<Tr, Tex>)
+        || (std::is_same_v<
+                Tx,
+                double> && std::is_same_v<Tx, Ty> && std::is_same_v<Ty, Tr> && std::is_same_v<Tr, Tex>)
+        || (std::is_same_v<
+                Tx,
+                rocblas_half> && std::is_same_v<Tx, Ty> && std::is_same_v<Ty, Tr> && std::is_same_v<Tr, Tex>)
+        || (std::is_same_v<
+                Tx,
+                rocblas_float_complex> && std::is_same_v<Tx, Ty> && std::is_same_v<Ty, Tr> && std::is_same_v<Tr, Tex>)
+        || (std::is_same_v<
+                Tx,
+                rocblas_double_complex> && std::is_same_v<Tx, Ty> && std::is_same_v<Ty, Tr> && std::is_same_v<Tr, Tex>)
+        || (std::is_same_v<
+                Tx,
+                rocblas_half> && std::is_same_v<Tx, Ty> && std::is_same_v<Ty, Tr> && std::is_same_v<Tex, float>)
+        || (std::is_same_v<
+                Tx,
+                rocblas_bfloat16> && std::is_same_v<Tx, Ty> && std::is_same_v<Ty, Tr> && std::is_same_v<Tex, float>)>>
     : rocblas_test_valid
 {
     void operator()(const Arguments& arg)
@@ -824,14 +849,18 @@ struct perf_blas_nrm2_ex<
     std::enable_if_t<
         (std::is_same_v<Tx, float> && std::is_same_v<Tx, Tr> && std::is_same_v<Tr, Tex>)
         || (std::is_same_v<Tx, double> && std::is_same_v<Tx, Tr> && std::is_same_v<Tr, Tex>)
-        || (std::is_same_v<Tx, rocblas_float_complex> && std::is_same_v<Tr, float>
-            && std::is_same_v<Tr, Tex>)
-        || (std::is_same_v<Tx, rocblas_double_complex> && std::is_same_v<Tr, double>
-            && std::is_same_v<Tr, Tex>)
-        || (std::is_same_v<Tx, rocblas_bfloat16> && std::is_same_v<Tx, Tr>
-            && std::is_same_v<Tex, float>)
-        || (std::is_same_v<Tx, rocblas_half> && std::is_same_v<Tr, Tx>
-            && std::is_same_v<Tex, float>)>> : rocblas_test_valid
+        || (std::is_same_v<
+                Tx,
+                rocblas_float_complex> && std::is_same_v<Tr, float> && std::is_same_v<Tr, Tex>)
+        || (std::is_same_v<
+                Tx,
+                rocblas_double_complex> && std::is_same_v<Tr, double> && std::is_same_v<Tr, Tex>)
+        || (std::is_same_v<
+                Tx,
+                rocblas_bfloat16> && std::is_same_v<Tx, Tr> && std::is_same_v<Tex, float>)
+        || (std::is_same_v<Tx,
+                           rocblas_half> && std::is_same_v<Tr, Tx> && std::is_same_v<Tex, float>)>>
+    : rocblas_test_valid
 {
     void operator()(const Arguments& arg)
     {
@@ -854,17 +883,22 @@ struct perf_blas_rot<
     Ti,
     To,
     Tc,
-    std::enable_if_t<(std::is_same_v<Ti, float> && std::is_same_v<Ti, To> && std::is_same_v<To, Tc>)
-                     || (std::is_same_v<Ti, double> && std::is_same_v<Ti, To>
-                         && std::is_same_v<To, Tc>)
-                     || (std::is_same_v<Ti, rocblas_float_complex> && std::is_same_v<To, float>
-                         && std::is_same_v<Tc, rocblas_float_complex>)
-                     || (std::is_same_v<Ti, rocblas_float_complex> && std::is_same_v<To, float>
-                         && std::is_same_v<Tc, float>)
-                     || (std::is_same_v<Ti, rocblas_double_complex> && std::is_same_v<To, double>
-                         && std::is_same_v<Tc, rocblas_double_complex>)
-                     || (std::is_same_v<Ti, rocblas_double_complex> && std::is_same_v<To, double>
-                         && std::is_same_v<Tc, double>)>> : rocblas_test_valid
+    std::enable_if_t<
+        (std::is_same_v<Ti, float> && std::is_same_v<Ti, To> && std::is_same_v<To, Tc>)
+        || (std::is_same_v<Ti, double> && std::is_same_v<Ti, To> && std::is_same_v<To, Tc>)
+        || (std::is_same_v<
+                Ti,
+                rocblas_float_complex> && std::is_same_v<To, float> && std::is_same_v<Tc, rocblas_float_complex>)
+        || (std::is_same_v<
+                Ti,
+                rocblas_float_complex> && std::is_same_v<To, float> && std::is_same_v<Tc, float>)
+        || (std::is_same_v<
+                Ti,
+                rocblas_double_complex> && std::is_same_v<To, double> && std::is_same_v<Tc, rocblas_double_complex>)
+        || (std::is_same_v<
+                Ti,
+                rocblas_double_complex> && std::is_same_v<To, double> && std::is_same_v<Tc, double>)>>
+    : rocblas_test_valid
 {
     void operator()(const Arguments& arg)
     {
@@ -889,22 +923,31 @@ struct perf_blas_rot_ex<
     Tcs,
     Tex,
     std::enable_if_t<
-        (std::is_same_v<Tx, float> && std::is_same_v<Tx, Ty> && std::is_same_v<Ty, Tcs>
-         && std::is_same_v<Tcs, Tex>)
-        || (std::is_same_v<Tx, double> && std::is_same_v<Ty, Tx> && std::is_same_v<Ty, Tcs>
-            && std::is_same_v<Tex, Tcs>)
-        || (std::is_same_v<Tx, rocblas_float_complex> && std::is_same_v<Ty, Tx>
-            && std::is_same_v<Tcs, Ty> && std::is_same_v<Tcs, Tex>)
-        || (std::is_same_v<Tx, rocblas_double_complex> && std::is_same_v<Tx, Ty>
-            && std::is_same_v<Tcs, Ty> && std::is_same_v<Tex, Tcs>)
-        || (std::is_same_v<Tx, rocblas_float_complex> && std::is_same_v<Ty, Tx>
-            && std::is_same_v<Tcs, float> && std::is_same_v<Tex, rocblas_float_complex>)
-        || (std::is_same_v<Tx, rocblas_double_complex> && std::is_same_v<Tx, Ty>
-            && std::is_same_v<Tcs, double> && std::is_same_v<Tex, rocblas_double_complex>)
-        || (std::is_same_v<Tx, rocblas_half> && std::is_same_v<Ty, Tx> && std::is_same_v<Tcs, Ty>
-            && std::is_same_v<Tex, float>)
-        || (std::is_same_v<Tx, rocblas_bfloat16> && std::is_same_v<Ty, Tx>
-            && std::is_same_v<Tcs, Ty> && std::is_same_v<Tex, float>)>> : rocblas_test_valid
+        (std::is_same_v<
+             Tx,
+             float> && std::is_same_v<Tx, Ty> && std::is_same_v<Ty, Tcs> && std::is_same_v<Tcs, Tex>)
+        || (std::is_same_v<
+                Tx,
+                double> && std::is_same_v<Ty, Tx> && std::is_same_v<Ty, Tcs> && std::is_same_v<Tex, Tcs>)
+        || (std::is_same_v<
+                Tx,
+                rocblas_float_complex> && std::is_same_v<Ty, Tx> && std::is_same_v<Tcs, Ty> && std::is_same_v<Tcs, Tex>)
+        || (std::is_same_v<
+                Tx,
+                rocblas_double_complex> && std::is_same_v<Tx, Ty> && std::is_same_v<Tcs, Ty> && std::is_same_v<Tex, Tcs>)
+        || (std::is_same_v<
+                Tx,
+                rocblas_float_complex> && std::is_same_v<Ty, Tx> && std::is_same_v<Tcs, float> && std::is_same_v<Tex, rocblas_float_complex>)
+        || (std::is_same_v<
+                Tx,
+                rocblas_double_complex> && std::is_same_v<Tx, Ty> && std::is_same_v<Tcs, double> && std::is_same_v<Tex, rocblas_double_complex>)
+        || (std::is_same_v<
+                Tx,
+                rocblas_half> && std::is_same_v<Ty, Tx> && std::is_same_v<Tcs, Ty> && std::is_same_v<Tex, float>)
+        || (std::is_same_v<
+                Tx,
+                rocblas_bfloat16> && std::is_same_v<Ty, Tx> && std::is_same_v<Tcs, Ty> && std::is_same_v<Tex, float>)>>
+    : rocblas_test_valid
 {
     void operator()(const Arguments& arg)
     {
@@ -960,22 +1003,29 @@ struct perf_blas_scal_ex<
         (std::is_same_v<Ta, float> && std::is_same_v<Ta, Tx> && std::is_same_v<Tx, Tex>)
         || (std::is_same_v<Ta, double> && std::is_same_v<Ta, Tx> && std::is_same_v<Tx, Tex>)
         || (std::is_same_v<Ta, rocblas_half> && std::is_same_v<Ta, Tx> && std::is_same_v<Tx, Tex>)
-        || (std::is_same_v<Ta, rocblas_float_complex> && std::is_same_v<Ta, Tx>
-            && std::is_same_v<Tx, Tex>)
-        || (std::is_same_v<Ta, rocblas_double_complex> && std::is_same_v<Ta, Tx>
-            && std::is_same_v<Tx, Tex>)
-        || (std::is_same_v<Ta, rocblas_half> && std::is_same_v<Ta, Tx>
-            && std::is_same_v<Tex, float>)
-        || (std::is_same_v<Ta, float> && std::is_same_v<Tx, rocblas_half>
-            && std::is_same_v<Ta, Tex>)
-        || (std::is_same_v<Ta, rocblas_bfloat16> && std::is_same_v<Ta, Tx>
-            && std::is_same_v<Tex, float>)
-        || (std::is_same_v<Ta, float> && std::is_same_v<Tx, rocblas_bfloat16>
-            && std::is_same_v<Ta, Tex>)
-        || (std::is_same_v<Ta, float> && std::is_same_v<Tx, rocblas_float_complex>
-            && std::is_same_v<Tx, Tex>)
-        || (std::is_same_v<Ta, double> && std::is_same_v<Tx, rocblas_double_complex>
-            && std::is_same_v<Tx, Tex>)>> : rocblas_test_valid
+        || (std::is_same_v<
+                Ta,
+                rocblas_float_complex> && std::is_same_v<Ta, Tx> && std::is_same_v<Tx, Tex>)
+        || (std::is_same_v<
+                Ta,
+                rocblas_double_complex> && std::is_same_v<Ta, Tx> && std::is_same_v<Tx, Tex>)
+        || (std::is_same_v<Ta,
+                           rocblas_half> && std::is_same_v<Ta, Tx> && std::is_same_v<Tex, float>)
+        || (std::is_same_v<Ta,
+                           float> && std::is_same_v<Tx, rocblas_half> && std::is_same_v<Ta, Tex>)
+        || (std::is_same_v<
+                Ta,
+                rocblas_bfloat16> && std::is_same_v<Ta, Tx> && std::is_same_v<Tex, float>)
+        || (std::is_same_v<
+                Ta,
+                float> && std::is_same_v<Tx, rocblas_bfloat16> && std::is_same_v<Ta, Tex>)
+        || (std::is_same_v<
+                Ta,
+                float> && std::is_same_v<Tx, rocblas_float_complex> && std::is_same_v<Tx, Tex>)
+        || (std::is_same_v<
+                Ta,
+                double> && std::is_same_v<Tx, rocblas_double_complex> && std::is_same_v<Tx, Tex>)>>
+    : rocblas_test_valid
 {
     void operator()(const Arguments& arg)
     {
@@ -999,10 +1049,12 @@ struct perf_blas_rotg<
     Tb,
     Tc,
     std::enable_if_t<
-        (std::is_same_v<Ta, rocblas_double_complex> && std::is_same_v<Tb, double>
-         && std::is_same_v<Ta, Tc>)
-        || (std::is_same_v<Ta, rocblas_float_complex> && std::is_same_v<Tb, float>
-            && std::is_same_v<Ta, Tc>)
+        (std::is_same_v<
+             Ta,
+             rocblas_double_complex> && std::is_same_v<Tb, double> && std::is_same_v<Ta, Tc>)
+        || (std::is_same_v<
+                Ta,
+                rocblas_float_complex> && std::is_same_v<Tb, float> && std::is_same_v<Ta, Tc>)
         || (std::is_same_v<Ta, Tb> && std::is_same_v<Ta, float> && std::is_same_v<Ta, Tc>)
         || (std::is_same_v<Ta, Tb> && std::is_same_v<Ta, double> && std::is_same_v<Ta, Tc>)>>
     : rocblas_test_valid
@@ -1336,19 +1388,32 @@ int rocblas_bench_datafile(const std::string& filter,
     auto                   arg_iter = RocBLAS_TestData();
     std::vector<Arguments> args{arg_iter.begin(), arg_iter.end()};
 
-    bool   do_shared_memory = true;
-    size_t maxM = 0, maxN = 0, maxK = 0, ldA = 0, ldB = 0, ldC = 0, ldD = 0;
+    bool do_shared_memory = true;
+
+    // Create a temp arg to access high-level functions
+    Arguments maximal_arg;
+    if(args.empty())
+    {
+        return 0;
+    }
+    else
+    {
+        maximal_arg = args.front();
+    }
+
+    // Check if shared memory can be used
     for(Arguments arg : args)
     {
-        if(arg.M > maxM)
-            maxM = arg.M;
+        if(arg.M > maximal_arg.M)
+            maximal_arg.M = arg.M;
         if(arg.N > maxN)
             maxN = arg.N;
         if(arg.K > maxK)
             maxK = arg.K;
         if(arg.a_type != rocblas_datatype_f16_r || arg.b_type != rocblas_datatype_f16_r
            || arg.c_type != rocblas_datatype_f16_r || arg.d_type != rocblas_datatype_f16_r
-           || !strcmp(arg.function, "rocblas_gemm_ex"))
+           || !strcmp(arg.function, "rocblas_gemm_ex")
+           || maximal_arg.initialization != arg.initialization)
         {
             do_shared_memory = false;
             break;
@@ -1358,33 +1423,22 @@ int rocblas_bench_datafile(const std::string& filter,
     {
         using data_type = rocblas_half;
 
-        // Create temp arg to access high-level functions
-        Arguments first_arg;
-        if(args.empty())
-        {
-            return 1;
-        }
-        else
-        {
-            first_arg = args.front();
-        }
-        first_arg.M = maxM;
-        first_arg.N = maxN;
-        first_arg.K = maxK;
+        maximal_arg.N = maxN;
+        maximal_arg.K = maxK;
 
-        device_vector<data_type> dA(maxM * maxK);
+        device_vector<data_type> dA(maximal_arg.M * maxK);
         device_vector<data_type> dB(maxK * maxN);
-        device_vector<data_type> dC(maxM * maxN);
-        device_vector<data_type> dD(maxM * maxN);
+        device_vector<data_type> dC(maximal_arg.M * maxN);
+        device_vector<data_type> dD(maximal_arg.M * maxN);
         data_type*               dAPointer = dA.device_vector_setup();
         data_type*               dBPointer = dB.device_vector_setup();
         data_type*               dCPointer = dC.device_vector_setup();
         data_type*               dDPointer = dD.device_vector_setup();
 
         // Allocate host memory
-        host_vector<data_type> hA(maxM * maxK);
+        host_vector<data_type> hA(maximal_arg.M * maxK);
         host_vector<data_type> hB(maxK * maxN);
-        host_vector<data_type> hC(maxM * maxN);
+        host_vector<data_type> hC(maximal_arg.M * maxN);
 
         // Check host memory allocation
         CHECK_HIP_ERROR(hA.memcheck());
@@ -1392,9 +1446,9 @@ int rocblas_bench_datafile(const std::string& filter,
         CHECK_HIP_ERROR(hC.memcheck());
 
         // Initialize host memory
-        rocblas_init_vector<data_type>(hA, first_arg, rocblas_client_alpha_sets_nan);
-        rocblas_init_vector<data_type>(hB, first_arg, rocblas_client_alpha_sets_nan);
-        rocblas_init_vector<data_type>(hC, first_arg, rocblas_client_alpha_sets_nan);
+        rocblas_init_vector<data_type>(hA, maximal_arg, rocblas_client_alpha_sets_nan);
+        rocblas_init_vector<data_type>(hB, maximal_arg, rocblas_client_alpha_sets_nan);
+        rocblas_init_vector<data_type>(hC, maximal_arg, rocblas_client_alpha_sets_nan);
 
         // copy data from CPU to device
         CHECK_HIP_ERROR(dA.transfer_from(hA));
