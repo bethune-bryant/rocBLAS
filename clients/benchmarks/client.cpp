@@ -1391,6 +1391,7 @@ int rocblas_bench_datafile(const std::string& filter,
     bool do_shared_memory = true;
 
     // Create a temp arg to access high-level functions
+    // Stores the args to allocate the nessessary memory for all arguments
     Arguments maximal_arg;
     if(args.empty())
     {
@@ -1406,14 +1407,14 @@ int rocblas_bench_datafile(const std::string& filter,
     {
         if(arg.M > maximal_arg.M)
             maximal_arg.M = arg.M;
-        if(arg.N > maxN)
-            maxN = arg.N;
-        if(arg.K > maxK)
-            maxK = arg.K;
+        if(arg.N > maximal_arg.N)
+            maximal_arg.N = arg.N;
+        if(arg.K > maximal_arg.K)
+            maximal_arg.K = arg.K;
         if(arg.a_type != rocblas_datatype_f16_r || arg.b_type != rocblas_datatype_f16_r
            || arg.c_type != rocblas_datatype_f16_r || arg.d_type != rocblas_datatype_f16_r
            || !strcmp(arg.function, "rocblas_gemm_ex")
-           || maximal_arg.initialization != arg.initialization)
+           || arg.initialization != maximal_arg.initialization)
         {
             do_shared_memory = false;
             break;
@@ -1423,22 +1424,22 @@ int rocblas_bench_datafile(const std::string& filter,
     {
         using data_type = rocblas_half;
 
-        maximal_arg.N = maxN;
-        maximal_arg.K = maxK;
+        maximal_arg.N = maximal_arg.N;
+        maximal_arg.K = maximal_arg.K;
 
-        device_vector<data_type> dA(maximal_arg.M * maxK);
-        device_vector<data_type> dB(maxK * maxN);
-        device_vector<data_type> dC(maximal_arg.M * maxN);
-        device_vector<data_type> dD(maximal_arg.M * maxN);
+        device_vector<data_type> dA(maximal_arg.M * maximal_arg.K);
+        device_vector<data_type> dB(maximal_arg.K * maximal_arg.N);
+        device_vector<data_type> dC(maximal_arg.M * maximal_arg.N);
+        device_vector<data_type> dD(maximal_arg.M * maximal_arg.N);
         data_type*               dAPointer = dA.device_vector_setup();
         data_type*               dBPointer = dB.device_vector_setup();
         data_type*               dCPointer = dC.device_vector_setup();
         data_type*               dDPointer = dD.device_vector_setup();
 
         // Allocate host memory
-        host_vector<data_type> hA(maximal_arg.M * maxK);
-        host_vector<data_type> hB(maxK * maxN);
-        host_vector<data_type> hC(maximal_arg.M * maxN);
+        host_vector<data_type> hA(maximal_arg.M * maximal_arg.K);
+        host_vector<data_type> hB(maximal_arg.K * maximal_arg.N);
+        host_vector<data_type> hC(maximal_arg.M * maximal_arg.N);
 
         // Check host memory allocation
         CHECK_HIP_ERROR(hA.memcheck());
