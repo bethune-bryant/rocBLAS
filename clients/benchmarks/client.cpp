@@ -1328,141 +1328,68 @@ int run_bench_test(bool               init,
     return 0;
 }
 
+template <typename data_type>
+void* setup_shared_vector(size_t size, Arguments arg)
+{
+    device_vector<data_type> dA(size, 1, false, false);
+    host_vector<data_type>   hA(size);
+    CHECK_HIP_ERROR(hA.memcheck());
+    rocblas_init_vector<data_type>(hA, arg, rocblas_client_alpha_sets_nan);
+    CHECK_HIP_ERROR(dA.transfer_from(hA));
+    return dA;
+}
+
 void* setup_shared_vector(size_t size, rocblas_datatype type, Arguments arg)
 {
     switch(type)
     {
     case rocblas_datatype_f16_r:
     {
-        using data_type = rocblas_half;
-        device_vector<data_type> dA(size, 1, false, false);
-        host_vector<data_type>   hA(size);
-        CHECK_HIP_ERROR(hA.memcheck());
-        rocblas_init_vector<data_type>(hA, arg, rocblas_client_alpha_sets_nan);
-        CHECK_HIP_ERROR(dA.transfer_from(hA));
-        return dA;
-        break;
+        return setup_shared_vector<rocblas_half>(size, arg);
     }
     case rocblas_datatype_f32_r:
     {
-        using data_type = rocblas_float;
-        device_vector<data_type> dA(size, 1, false, false);
-        host_vector<data_type>   hA(size);
-        CHECK_HIP_ERROR(hA.memcheck());
-        rocblas_init_vector<data_type>(hA, arg, rocblas_client_alpha_sets_nan);
-        CHECK_HIP_ERROR(dA.transfer_from(hA));
-        return dA;
-        break;
+        return setup_shared_vector<rocblas_float>(size, arg);
     }
     case rocblas_datatype_f8_r:
     {
-        using data_type = rocblas_f8;
-        device_vector<data_type> dA(size, 1, false, false);
-        host_vector<data_type>   hA(size);
-        CHECK_HIP_ERROR(hA.memcheck());
-        rocblas_init_vector<data_type>(hA, arg, rocblas_client_alpha_sets_nan);
-        CHECK_HIP_ERROR(dA.transfer_from(hA));
-        return dA;
-        break;
+        return setup_shared_vector<rocblas_f8>(size, arg);
     }
     case rocblas_datatype_bf8_r:
     {
-        using data_type = rocblas_bf8;
-        device_vector<data_type> dA(size, 1, false, false);
-        host_vector<data_type>   hA(size);
-        CHECK_HIP_ERROR(hA.memcheck());
-        rocblas_init_vector<data_type>(hA, arg, rocblas_client_alpha_sets_nan);
-        CHECK_HIP_ERROR(dA.transfer_from(hA));
-        return dA;
-        break;
+        return setup_shared_vector<rocblas_bf8>(size, arg);
     }
     case rocblas_datatype_f64_r:
     {
-        using data_type = rocblas_double;
-        device_vector<data_type> dA(size, 1, false, false);
-        host_vector<data_type>   hA(size);
-        CHECK_HIP_ERROR(hA.memcheck());
-        rocblas_init_vector<data_type>(hA, arg, rocblas_client_alpha_sets_nan);
-        CHECK_HIP_ERROR(dA.transfer_from(hA));
-        return dA;
-        break;
+        return setup_shared_vector<rocblas_double>(size, arg);
     }
     case rocblas_datatype_f32_c:
     {
-        using data_type = rocblas_float_complex;
-        device_vector<data_type> dA(size, 1, false, false);
-        host_vector<data_type>   hA(size);
-        CHECK_HIP_ERROR(hA.memcheck());
-        rocblas_init_vector<data_type>(hA, arg, rocblas_client_alpha_sets_nan);
-        CHECK_HIP_ERROR(dA.transfer_from(hA));
-        return dA;
-        break;
+        return setup_shared_vector<rocblas_float_complex>(size, arg);
     }
     case rocblas_datatype_f64_c:
     {
-        using data_type = rocblas_double_complex;
-        device_vector<data_type> dA(size, 1, false, false);
-        host_vector<data_type>   hA(size);
-        CHECK_HIP_ERROR(hA.memcheck());
-        rocblas_init_vector<data_type>(hA, arg, rocblas_client_alpha_sets_nan);
-        CHECK_HIP_ERROR(dA.transfer_from(hA));
-        return dA;
-        break;
+        return setup_shared_vector<rocblas_double_complex>(size, arg);
     }
     case rocblas_datatype_i8_r:
     {
-        using data_type = int8_t;
-        device_vector<data_type> dA(size, 1, false, false);
-        host_vector<data_type>   hA(size);
-        CHECK_HIP_ERROR(hA.memcheck());
-        rocblas_init_vector<data_type>(hA, arg, rocblas_client_alpha_sets_nan);
-        CHECK_HIP_ERROR(dA.transfer_from(hA));
-        return dA;
-        break;
+        return setup_shared_vector<int8_t>(size, arg);
     }
     case rocblas_datatype_u8_r:
     {
-        using data_type = uint8_t;
-        device_vector<data_type> dA(size, 1, false, false);
-        host_vector<data_type>   hA(size);
-        CHECK_HIP_ERROR(hA.memcheck());
-        rocblas_init_vector<data_type>(hA, arg, rocblas_client_alpha_sets_nan);
-        CHECK_HIP_ERROR(dA.transfer_from(hA));
-        return dA;
-        break;
+        return setup_shared_vector<uint8_t>(size, arg);
     }
     case rocblas_datatype_i32_r:
     {
-        using data_type = int32_t;
-        device_vector<data_type> dA(size, 1, false, false);
-        host_vector<data_type>   hA(size);
-        CHECK_HIP_ERROR(hA.memcheck());
-        rocblas_init_vector<data_type>(hA, arg, rocblas_client_alpha_sets_nan);
-        CHECK_HIP_ERROR(dA.transfer_from(hA));
-        return dA;
-        break;
+        return setup_shared_vector<int32_t>(size, arg);
     }
     case rocblas_datatype_u32_r:
     {
-        using data_type = uint32_t;
-        device_vector<data_type> dA(size, 1, false, false);
-        host_vector<data_type>   hA(size);
-        CHECK_HIP_ERROR(hA.memcheck());
-        rocblas_init_vector<data_type>(hA, arg, rocblas_client_alpha_sets_nan);
-        CHECK_HIP_ERROR(dA.transfer_from(hA));
-        return dA;
-        break;
+        return setup_shared_vector<uint32_t>(size, arg);
     }
     case rocblas_datatype_bf16_r:
     {
-        using data_type = rocblas_bfloat16;
-        device_vector<data_type> dA(size, 1, false, false);
-        host_vector<data_type>   hA(size);
-        CHECK_HIP_ERROR(hA.memcheck());
-        rocblas_init_vector<data_type>(hA, arg, rocblas_client_alpha_sets_nan);
-        CHECK_HIP_ERROR(dA.transfer_from(hA));
-        return dA;
-        break;
+        return setup_shared_vector<rocblas_bfloat16>(size, arg);
     }
     default:
         return nullptr;
