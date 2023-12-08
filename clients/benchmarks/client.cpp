@@ -1339,7 +1339,7 @@ void* setup_shared_matrix(
     rocblas_init_matrix<data_type>(
         hA, arg, rocblas_client_alpha_sets_nan, rocblas_client_general_matrix, true);
     CHECK_HIP_ERROR(dA.broadcast_one_matrix_from(hA));
-    return dA;
+    return dA.data();
 }
 
 void* setup_shared_matrix(size_t           row,
