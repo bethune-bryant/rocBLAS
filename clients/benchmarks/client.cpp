@@ -1336,19 +1336,33 @@ int rocblas_bench_datafile(const std::string& filter,
     auto                   arg_iter = RocBLAS_TestData();
     std::vector<Arguments> args{arg_iter.begin(), arg_iter.end()};
 
-    bool   do_shared_memory = true;
-    size_t maxM = 0, maxN = 0, maxK = 0, ldA = 0, ldB = 0, ldC = 0, ldD = 0;
+    bool do_shared_memory = true;
+
+    // Create a temp arg to access high-level functions
+    // Stores the args to allocate the nessessary memory for all arguments
+    Arguments maximal_arg;
+    if(args.empty())
+    {
+        return 0;
+    }
+    else
+    {
+        maximal_arg = args.front();
+    }
+
+    // Check if shared memory can be used
     for(Arguments arg : args)
     {
-        if(arg.M > maxM)
-            maxM = arg.M;
-        if(arg.N > maxN)
-            maxN = arg.N;
-        if(arg.K > maxK)
-            maxK = arg.K;
+        if(arg.M > maximal_arg.M)
+            maximal_arg.M = arg.M;
+        if(arg.N > maximal_arg.N)
+            maximal_arg.N = arg.N;
+        if(arg.K > maximal_arg.K)
+            maximal_arg.K = arg.K;
         if(arg.a_type != rocblas_datatype_f16_r || arg.b_type != rocblas_datatype_f16_r
            || arg.c_type != rocblas_datatype_f16_r || arg.d_type != rocblas_datatype_f16_r
-           || !strcmp(arg.function, "rocblas_gemm_ex"))
+           || !strcmp(arg.function, "rocblas_gemm_ex")
+           || arg.initialization != maximal_arg.initialization)
         {
             do_shared_memory = false;
             break;
@@ -1356,19 +1370,24 @@ int rocblas_bench_datafile(const std::string& filter,
     }
     if(do_shared_memory)
     {
-        device_vector<rocblas_half> dA(maxM * maxK);
-        device_vector<rocblas_half> dB(maxK * maxN);
-        device_vector<rocblas_half> dC(maxM * maxN);
-        device_vector<rocblas_half> dD(maxM * maxN);
-        void*                       dAPointer = dA.device_vector_setup();
-        void*                       dBPointer = dB.device_vector_setup();
-        void*                       dCPointer = dC.device_vector_setup();
-        void*                       dDPointer = dD.device_vector_setup();
+        using data_type = rocblas_half;
+
+        maximal_arg.N = maximal_arg.N;
+        maximal_arg.K = maximal_arg.K;
+
+        device_vector<data_type> dA(maximal_arg.M * maximal_arg.K);
+        device_vector<data_type> dB(maximal_arg.K * maximal_arg.N);
+        device_vector<data_type> dC(maximal_arg.M * maximal_arg.N);
+        device_vector<data_type> dD(maximal_arg.M * maximal_arg.N);
+        data_type*               dAPointer = dA.device_vector_setup();
+        data_type*               dBPointer = dB.device_vector_setup();
+        data_type*               dCPointer = dC.device_vector_setup();
+        data_type*               dDPointer = dD.device_vector_setup();
 
         // Allocate host memory
-        host_vector<rocblas_half> hA(maxM * maxK);
-        host_vector<rocblas_half> hB(maxK * maxN);
-        host_vector<rocblas_half> hC(maxM * maxN);
+        host_vector<data_type> hA(maximal_arg.M * maximal_arg.K);
+        host_vector<data_type> hB(maximal_arg.K * maximal_arg.N);
+        host_vector<data_type> hC(maximal_arg.M * maximal_arg.N);
 
         // Check host memory allocation
         CHECK_HIP_ERROR(hA.memcheck());
@@ -1376,18 +1395,15 @@ int rocblas_bench_datafile(const std::string& filter,
         CHECK_HIP_ERROR(hC.memcheck());
 
         // Initialize host memory
-        // rocblas_check_matrix_type, uplo, host_vector, M, N, lda
-        rocblas_init_matrix_trig<rocblas_half>(
-            rocblas_client_general_matrix, '*', hA, maxM, maxK, 1);
-        rocblas_init_matrix_trig<rocblas_half>(
-            rocblas_client_general_matrix, '*', hB, maxK, maxN, 1);
-        rocblas_init_matrix_trig<rocblas_half>(
-            rocblas_client_general_matrix, '*', hC, maxM, maxN, 1);
+        rocblas_init_vector<data_type>(hA, first_arg, rocblas_client_alpha_sets_nan);
+        rocblas_init_vector<data_type>(hB, first_arg, rocblas_client_alpha_sets_nan);
+        rocblas_init_vector<data_type>(hC, first_arg, rocblas_client_alpha_sets_nan);
 
         // copy data from CPU to device
         CHECK_HIP_ERROR(dA.transfer_from(hA));
         CHECK_HIP_ERROR(dB.transfer_from(hB));
         CHECK_HIP_ERROR(dC.transfer_from(hC));
+
         for(Arguments arg : args)
         {
             arg.dA = dAPointer;
