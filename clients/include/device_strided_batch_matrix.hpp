@@ -59,14 +59,15 @@ public:
                                          size_t         lda,
                                          rocblas_stride stride,
                                          int64_t        batch_count,
-                                         bool           HMM = false)
+                                         bool           HMM     = false,
+                                         bool           cleanup = true)
         : d_vector<T>(calculate_nmemb(n, lda, stride, batch_count), HMM)
         , m_m(m)
         , m_n(n)
         , m_lda(lda)
         , m_stride(stride)
         , m_batch_count(batch_count)
-        , m_shared_memory(false)
+        , m_cleanup{cleanup}
     {
         bool valid_parameters = calculate_nmemb(n, lda, stride, batch_count) > 0;
         if(valid_parameters)
@@ -94,13 +95,13 @@ public:
         {
             if(data != nullptr)
             {
-                this->m_shared_memory = true;
-                this->m_data          = (T*)data;
+                this->m_cleanup = false;
+                this->m_data    = (T*)data;
             }
             else
             {
-                this->m_shared_memory = false;
-                this->m_data          = this->device_vector_setup();
+                this->m_cleanup = true;
+                this->m_data    = this->device_vector_setup();
             }
         }
     }
@@ -110,7 +111,7 @@ public:
     //!
     ~device_strided_batch_matrix()
     {
-        if(!m_shared_memory)
+        if(m_cleanup)
         {
             if(nullptr != this->m_data)
             {
@@ -280,7 +281,7 @@ private:
     rocblas_stride m_stride{};
     int64_t        m_batch_count{};
     T*             m_data{};
-    bool           m_shared_memory{};
+    bool           m_cleanup{};
 
     static size_t calculate_nmemb(size_t n, size_t lda, rocblas_stride stride, int64_t batch_count)
     {
