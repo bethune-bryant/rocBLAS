@@ -358,25 +358,16 @@ void testing_gemm_ex(const Arguments& arg)
             arg.flush_batch_count, arg.flush_memory_size, a_b_c_cached_size);
     }
 
-    // Allocate host memory
-    host_matrix<Ti> hA(A_row, A_col, lda);
-    host_matrix<Ti> hB(B_row, B_col, ldb);
-    host_matrix<To> hC(M, N, ldc);
-
-    // Check host memory allocation
-    CHECK_HIP_ERROR(hA.memcheck());
-    CHECK_HIP_ERROR(hB.memcheck());
-    CHECK_HIP_ERROR(hC.memcheck());
-
     // Allocate device memory
-    device_strided_batch_matrix<Ti> dA(A_row, A_col, lda, aligned_stride_a, flush_batch_count);
-    device_strided_batch_matrix<Ti> dB(B_row, B_col, ldb, aligned_stride_b, flush_batch_count);
-    device_strided_batch_matrix<To> dC(M, N, ldc, aligned_stride_c, flush_batch_count);
+    device_strided_batch_matrix<Ti> dA(arg.dA, A_row, A_col, lda, aligned_stride_a, flush_batch_count);
+    device_strided_batch_matrix<Ti> dB(arg.dB, B_row, B_col, ldb, aligned_stride_b, flush_batch_count);
+    device_strided_batch_matrix<To> dC(arg.dC, M, N, ldc, aligned_stride_c, flush_batch_count);
     // if C!=D, allocate C and D normally
     // if C==D, allocate C big enough for the larger of C and D; D points to C
     device_strided_batch_matrix<To> dD_alloc
-        = (arg.outofplace) ? device_strided_batch_matrix<To>(M, N, ldd, aligned_stride_d, 1)
-                           : device_strided_batch_matrix<To>(0, 1, 1, 1, 1);
+        = (arg.outofplace)
+              ? device_strided_batch_matrix<To>(arg.dD, M, N, ldd, stride_d, flush_batch_count)
+              : device_strided_batch_matrix<To>(0, 1, 1, 1, 1);
     device_strided_batch_matrix<To>& dD = (arg.outofplace) ? dD_alloc : dC;
 
     device_vector<Tc> d_alpha_Tc(1);
@@ -393,21 +384,49 @@ void testing_gemm_ex(const Arguments& arg)
     bool alt       = (rocblas_gemm_flags_fp16_alt_impl & flags);
     bool alt_round = (rocblas_gemm_flags_fp16_alt_impl_rnz & flags);
 
-    // Initialize data on host memory
-    rocblas_init_matrix<Ti>(
-        hA, arg, rocblas_client_alpha_sets_nan, rocblas_client_general_matrix, true);
-    rocblas_init_matrix<Ti, true>(
-        hB, arg, rocblas_client_alpha_sets_nan, rocblas_client_general_matrix, false, true);
-    rocblas_init_matrix<To, true>(
-        hC, arg, rocblas_client_beta_sets_nan, rocblas_client_general_matrix);
+    if(arg.dA == nullptr)
+    {
+        // Allocate host memory
+        host_matrix<Ti> hA(A_row, A_col, lda);
+        host_matrix<Ti> hB(B_row, B_col, ldb);
+        host_matrix<To> hC(M, N, ldc);
 
-    // copy data from CPU to device
-    CHECK_HIP_ERROR(dA.broadcast_one_matrix_from(hA));
-    CHECK_HIP_ERROR(dB.broadcast_one_matrix_from(hB));
-    CHECK_HIP_ERROR(dC.broadcast_one_matrix_from(hC));
+        // Check host memory allocation
+        CHECK_HIP_ERROR(hA.memcheck());
+        CHECK_HIP_ERROR(hB.memcheck());
+        CHECK_HIP_ERROR(hC.memcheck());
+
+        // Initialize data on host memory
+        rocblas_init_matrix<Ti>(
+            hA, arg, rocblas_client_alpha_sets_nan, rocblas_client_general_matrix, true);
+        rocblas_init_matrix<Ti, true>(
+            hB, arg, rocblas_client_alpha_sets_nan, rocblas_client_general_matrix, false, true);
+        rocblas_init_matrix<To, true>(
+            hC, arg, rocblas_client_beta_sets_nan, rocblas_client_general_matrix);
+
+        // copy data from CPU to device
+        CHECK_HIP_ERROR(dA.broadcast_one_matrix_from(hA));
+        CHECK_HIP_ERROR(dB.broadcast_one_matrix_from(hB));
+        CHECK_HIP_ERROR(dC.broadcast_one_matrix_from(hC));
+    }
+
 
     if(arg.unit_check || arg.norm_check)
     {
+        // Allocate host memory
+        host_matrix<Ti> hA(A_row, A_col, lda);
+        host_matrix<Ti> hB(B_row, B_col, ldb);
+        host_matrix<To> hC(M, N, ldc);
+
+        // Check host memory allocation
+        CHECK_HIP_ERROR(hA.memcheck());
+        CHECK_HIP_ERROR(hB.memcheck());
+        CHECK_HIP_ERROR(hC.memcheck());
+
+        CHECK_HIP_ERROR(hA.transfer_one_matrix_from(dA));
+        CHECK_HIP_ERROR(hB.transfer_one_matrix_from(dB));
+        CHECK_HIP_ERROR(hC.transfer_one_matrix_from(dC));
+
         using To_hpa = std::conditional_t<std::is_same_v<To, rocblas_bfloat16>, float, To>;
 
         host_matrix<To>     hD(M, N, ldd);
@@ -610,5 +629,6 @@ void testing_gemm_ex(const Arguments& arg)
                           ArgumentLogging::NA_value,
                           freq_monitor->getAverageFrequency(),
                           freq_monitor->getMedianFrequency());
+        usleep(gpu_time_used * 0.3);
     }
 }

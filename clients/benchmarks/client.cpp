@@ -1382,13 +1382,216 @@ int run_bench_test(bool               init,
     return 0;
 }
 
+template <typename data_type>
+void* setup_shared_matrix(
+    size_t row, size_t col, size_t ld, size_t stride, size_t batch_count, Arguments arg)
+{
+    device_strided_batch_matrix<data_type> dA(
+        row, col, ld, std::max(ld * col, stride), std::max((size_t)1, batch_count), false, false);
+    host_matrix<data_type> hA(row, col, ld);
+    CHECK_HIP_ERROR(hA.memcheck());
+    rocblas_init_matrix<data_type>(
+        hA, arg, rocblas_client_alpha_sets_nan, rocblas_client_general_matrix, true);
+    CHECK_HIP_ERROR(dA.broadcast_one_matrix_from(hA));
+    return dA.data();
+}
+
+void* setup_shared_matrix(size_t           row,
+                          size_t           col,
+                          size_t           ld,
+                          size_t           stride,
+                          size_t           batch_count,
+                          rocblas_datatype type,
+                          Arguments        arg)
+{
+    switch(type)
+    {
+    case rocblas_datatype_f16_r:
+    {
+        return setup_shared_matrix<rocblas_half>(row, col, ld, stride, batch_count, arg);
+    }
+    case rocblas_datatype_f32_r:
+    {
+        return setup_shared_matrix<rocblas_float>(row, col, ld, stride, batch_count, arg);
+    }
+    case rocblas_datatype_f8_r:
+    {
+        return setup_shared_matrix<rocblas_f8>(row, col, ld, stride, batch_count, arg);
+    }
+    case rocblas_datatype_bf8_r:
+    {
+        return setup_shared_matrix<rocblas_bf8>(row, col, ld, stride, batch_count, arg);
+    }
+    case rocblas_datatype_f64_r:
+    {
+        return setup_shared_matrix<rocblas_double>(row, col, ld, stride, batch_count, arg);
+    }
+    case rocblas_datatype_f32_c:
+    {
+        return setup_shared_matrix<rocblas_float_complex>(row, col, ld, stride, batch_count, arg);
+    }
+    case rocblas_datatype_f64_c:
+    {
+        return setup_shared_matrix<rocblas_double_complex>(row, col, ld, stride, batch_count, arg);
+    }
+    case rocblas_datatype_i8_r:
+    {
+        return setup_shared_matrix<int8_t>(row, col, ld, stride, batch_count, arg);
+    }
+    case rocblas_datatype_u8_r:
+    {
+        return setup_shared_matrix<uint8_t>(row, col, ld, stride, batch_count, arg);
+    }
+    case rocblas_datatype_i32_r:
+    {
+        return setup_shared_matrix<int32_t>(row, col, ld, stride, batch_count, arg);
+    }
+    case rocblas_datatype_u32_r:
+    {
+        return setup_shared_matrix<uint32_t>(row, col, ld, stride, batch_count, arg);
+    }
+    case rocblas_datatype_bf16_r:
+    {
+        return setup_shared_matrix<rocblas_bfloat16>(row, col, ld, stride, batch_count, arg);
+    }
+    default:
+        return nullptr;
+    }
+}
+
+void setup_shared_memory(std::vector<Arguments>& args)
+{
+    Arguments maximal_arg;
+    if(args.empty())
+    {
+        return;
+    }
+    else
+    {
+        maximal_arg = args.front();
+    }
+    size_t maxA_m = maximal_arg.M, maxA_n = maximal_arg.K, maxA_ld = maximal_arg.lda;
+    size_t maxB_m = maximal_arg.K, maxB_n = maximal_arg.N, maxB_ld = maximal_arg.ldb;
+    size_t maxC_m = maximal_arg.M, maxC_n = maximal_arg.N, maxC_ld = maximal_arg.ldc;
+    size_t maxD_m = maximal_arg.M, maxD_n = maximal_arg.N, maxD_ld = maximal_arg.ldd;
+    // Check if shared memory can be used
+    for(Arguments arg : args)
+    {
+        //if(arg.M * arg.K > maxA_m * maxA_n)
+        if(arg.K * arg.lda > maxA_n * maxA_ld)
+        {
+            maxA_m = arg.M;
+            maxA_n = arg.K;
+            maxA_ld = arg.lda;
+        }
+        //if(arg.K * arg.N > maxB_m * maxB_n)
+        if(arg.N * arg.ldb > maxB_n * maxB_ld)
+        {
+            maxB_m = arg.K;
+            maxB_n = arg.N;
+            maxB_ld = arg.ldb;
+        }
+        //if(arg.M * arg.N > maxC_m * maxC_n)
+        if(arg.N * arg.ldc > maxC_n * maxC_ld)
+        {
+            maxC_m = arg.M;
+            maxC_n = arg.N;
+            maxC_ld = arg.ldc;
+        }
+        //if(arg.M * arg.N > maxC_m * maxC_n)
+        if(arg.N * arg.ldd > maxD_n * maxD_ld)
+        {
+            maxD_m = arg.M;
+            maxD_n = arg.N;
+            maxD_ld = arg.ldd;
+        }
+        if(arg.M > maximal_arg.M)
+            maximal_arg.M = arg.M;
+        if(arg.N > maximal_arg.N)
+            maximal_arg.N = arg.N;
+        if(arg.K > maximal_arg.K)
+            maximal_arg.K = arg.K;
+        if(arg.lda > maximal_arg.lda)
+            maximal_arg.lda = arg.lda;
+        if(arg.ldb > maximal_arg.ldb)
+            maximal_arg.ldb = arg.ldb;
+        if(arg.ldc > maximal_arg.ldc)
+            maximal_arg.ldc = arg.ldc;
+        if(arg.ldd > maximal_arg.ldd)
+            maximal_arg.ldd = arg.ldd;
+        if(arg.batch_count > maximal_arg.batch_count)
+            maximal_arg.batch_count = arg.batch_count;
+        if(arg.flush_memory_size > maximal_arg.flush_memory_size)
+            maximal_arg.flush_memory_size = arg.flush_memory_size;
+        if(arg.stride_a > maximal_arg.stride_a)
+            maximal_arg.stride_a = arg.stride_a;
+        if(arg.stride_b > maximal_arg.stride_b)
+            maximal_arg.stride_b = arg.stride_b;
+        if(arg.stride_c > maximal_arg.stride_c)
+            maximal_arg.stride_c = arg.stride_c;
+        if(arg.stride_d > maximal_arg.stride_d)
+            maximal_arg.stride_d = arg.stride_d;
+        if(arg.a_type != maximal_arg.a_type || arg.b_type != maximal_arg.b_type
+           || arg.c_type != maximal_arg.c_type || arg.d_type != maximal_arg.d_type
+           || !strcmp(arg.function, "rocblas_gemm_ex")
+           || arg.initialization != maximal_arg.initialization)
+        {
+            return;
+        }
+    }
+
+    void* dA = setup_shared_matrix(maxA_m,
+                                   maxA_n,
+                                   maxA_ld,
+                                   maximal_arg.stride_a,
+                                   maximal_arg.batch_count,
+                                   maximal_arg.a_type,
+                                   maximal_arg);
+    void* dB = setup_shared_matrix(maxB_m,
+                                   maxB_n,
+                                   maxB_ld,
+                                   maximal_arg.stride_b,
+                                   maximal_arg.batch_count,
+                                   maximal_arg.b_type,
+                                   maximal_arg);
+    void* dC = setup_shared_matrix(maxC_m,
+                                   maxC_n,
+                                   maxC_ld,
+                                   maximal_arg.stride_c,
+                                   maximal_arg.batch_count,
+                                   maximal_arg.c_type,
+                                   maximal_arg);
+    void* dD = setup_shared_matrix(maxD_m,
+                                   maxD_n,
+                                   maxD_ld,
+                                   maximal_arg.stride_d,
+                                   maximal_arg.batch_count,
+                                   maximal_arg.d_type,
+                                   maximal_arg);
+
+    for(Arguments& arg : args)
+    {
+        arg.dA = dA;
+        arg.dB = dB;
+        arg.dC = dC;
+        arg.dD = dD;
+    }
+}
+
 int rocblas_bench_datafile(const std::string& filter,
                            const std::string& name_filter,
                            bool               any_stride)
 {
-    int ret = 0;
-    for(Arguments arg : RocBLAS_TestData())
+    int                    ret      = 0;
+    auto                   arg_iter = RocBLAS_TestData();
+    std::vector<Arguments> args{arg_iter.begin(), arg_iter.end()};
+
+    setup_shared_memory(args);
+
+    for(Arguments arg : args)
+    {
         ret |= run_bench_test(true, arg, filter, name_filter, any_stride, true);
+    }
     test_cleanup::cleanup();
     return ret;
 }

@@ -182,6 +182,11 @@ struct Arguments
     bool graph_test;
     bool repeatability_check;
 
+    void* dA;
+    void* dB;
+    void* dC;
+    void* dD;
+
     /*************************************************************************
      *                     End Of Arguments                                  *
      *************************************************************************/

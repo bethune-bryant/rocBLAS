@@ -151,6 +151,11 @@ void Arguments::init()
     HMM                 = false;
     graph_test          = false;
     repeatability_check = false;
+
+    dA = nullptr;
+    dB = nullptr;
+    dC = nullptr;
+    dD = nullptr;
 }
 
 bool Arguments::validate()

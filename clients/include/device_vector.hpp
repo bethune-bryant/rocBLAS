@@ -54,11 +54,12 @@ public:
     //! @param inc Element index increment. If zero treated as one.
     //! @param HMM HipManagedMemory Flag.
     //!
-    explicit device_vector(size_t n, int64_t inc = 1, bool HMM = false)
+    explicit device_vector(size_t n, int64_t inc = 1, bool HMM = false, bool cleanup = true)
         : d_vector<T>{calculate_nmemb(n, inc), HMM}
         , m_n{n}
         , m_inc{inc ? inc : 1}
         , m_data{this->device_vector_setup()}
+        , m_cleanup{cleanup}
     {
     }
 
@@ -67,8 +68,11 @@ public:
     //!
     ~device_vector()
     {
-        this->device_vector_teardown(m_data);
-        m_data = nullptr;
+        if(m_cleanup)
+        {
+            this->device_vector_teardown(m_data);
+            m_data = nullptr;
+        }
     }
 
     //!
@@ -141,6 +145,7 @@ private:
     size_t  m_n{};
     int64_t m_inc{};
     T*      m_data{};
+    bool m_cleanup{};
 
     static size_t calculate_nmemb(size_t n, int64_t inc)
     {
