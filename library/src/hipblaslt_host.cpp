@@ -502,16 +502,13 @@ rocblas_status
                                                         hipblaslt_compute_type<Tc>,
                                                         heuristicResults_temp);
 
-                if(HIPBLAS_STATUS_SUCCESS != fetch)
+                if(HIPBLAS_STATUS_SUCCESS == fetch)
                 {
-                    rocblas_internal_ostream msg;
-                    print_once(msg << "hipBLASLt error: Heuristic Fetch Failed!");
-                    return rocblas_status_internal_error;
+                    heuristicResults.insert(heuristicResults.end(),
+                                            heuristicResults_temp.begin(),
+                                            heuristicResults_temp.end());
                 }
 
-                heuristicResults.insert(heuristicResults.end(),
-                                        heuristicResults_temp.begin(),
-                                        heuristicResults_temp.end());
             }
         }
 
